@@ -9,6 +9,7 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    domains: ['img.icons8.com'],
   },
   webpack: (config, { dev, isServer }) => {
     // 生产环境优化
