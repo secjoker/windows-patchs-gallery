@@ -15,6 +15,11 @@ const nextConfig = {
         hostname: 'img.icons8.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
     ],
   },
   webpack: (config, { dev, isServer }) => {

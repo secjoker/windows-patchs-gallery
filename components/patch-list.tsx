@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { VulnerabilityCard } from "./vulnerability-card"
 import { Button } from "./ui/button"
+import { fetchVulnerabilities, Vulnerability as ApiVulnerability } from "@/lib/api"
+import { addDays } from "date-fns"
 
 interface PatchListProps {
   data?: Array<{
@@ -22,9 +24,52 @@ interface PatchListProps {
 export function PatchList({ data = [] }: PatchListProps) {
   const [currentTab, setCurrentTab] = useState<"all" | "critical" | "important" | "exploited">("all")
   const [displayedCount, setDisplayedCount] = useState(12)
+  const [vulnerabilities, setVulnerabilities] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  
+  // 如果没有传入数据，则自动加载模拟数据
+  useEffect(() => {
+    if (data.length === 0) {
+      loadMockData()
+    } else {
+      setVulnerabilities(data)
+    }
+  }, [data])
+  
+  // 加载模拟数据
+  const loadMockData = async () => {
+    setLoading(true)
+    try {
+      // 获取最近90天的数据
+      const endDate = new Date()
+      const startDate = addDays(endDate, -90)
+      
+      const mockData = await fetchVulnerabilities(startDate, endDate)
+      
+      // 转换数据格式以匹配组件要求
+      const formattedData = mockData.map(item => ({
+        cveNumber: item.id,
+        cveTitle: item.title,
+        releaseDate: item.publishedDate,
+        severity: item.severity as "Critical" | "Important" | "Moderate" | "Low",
+        baseScore: item.cvssScore,
+        impact: item.description.split('。')[0],
+        exploited: item.exploited === "Yes",
+        customerActionRequired: Math.random() > 0.5, // 随机设置
+        kbNumbers: item.kbNumbers,
+        productAffected: item.affectedProducts
+      }))
+      
+      setVulnerabilities(formattedData)
+    } catch (error) {
+      console.error("加载模拟数据失败:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
   
   // 根据当前标签过滤数据
-  const filteredData = data.filter(item => {
+  const filteredData = vulnerabilities.filter(item => {
     switch (currentTab) {
       case "critical":
         return item.severity === "Critical"
@@ -42,6 +87,8 @@ export function PatchList({ data = [] }: PatchListProps) {
   
   return (
     <>
+      <h2 className="text-2xl font-bold mb-4">安全漏洞列表</h2>
+      
       {/* 标签切换 */}
       <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
         <ul className="flex flex-wrap -mb-px">
@@ -96,8 +143,16 @@ export function PatchList({ data = [] }: PatchListProps) {
         </ul>
       </div>
       
+      {/* 加载状态 */}
+      {loading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-2">加载中...</span>
+        </div>
+      )}
+      
       {/* 补丁列表 */}
-      {displayedData.length > 0 ? (
+      {!loading && displayedData.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {displayedData.map((vulnerability) => (
@@ -106,6 +161,7 @@ export function PatchList({ data = [] }: PatchListProps) {
                 vulnerability={vulnerability}
                 onClick={() => {
                   // TODO: 显示详情模态框
+                  console.log("查看详情:", vulnerability.cveNumber)
                 }}
               />
             ))}
@@ -118,25 +174,28 @@ export function PatchList({ data = [] }: PatchListProps) {
                 onClick={() => setDisplayedCount(prev => prev + 12)}
                 className="bg-gradient-to-r from-blue-600 to-blue-400 text-white"
               >
-                <i className="fas fa-arrow-down mr-2"></i> 加载更多
+                <i className="fas fa-arrow-down mr-2"></i> 加载更多 
+                ({displayedCount}/{filteredData.length})
               </Button>
             </div>
           )}
         </>
       ) : (
-        <div className="text-center py-16 card">
-          <div className="text-5xl mb-4 text-gray-400">
-            <i className="fas fa-search"></i>
+        !loading && (
+          <div className="text-center py-16 bg-card rounded-lg shadow">
+            <div className="text-5xl mb-4 text-gray-400">
+              <i className="fas fa-search"></i>
+            </div>
+            <h3 className="text-xl font-semibold mb-2">未找到匹配的补丁信息</h3>
+            <p className="text-gray-500 mb-4">请尝试调整查询条件或选择其他日期范围</p>
+            <Button
+              variant="outline"
+              onClick={() => setCurrentTab("all")}
+            >
+              重置筛选条件
+            </Button>
           </div>
-          <h3 className="text-xl font-semibold mb-2">未找到匹配的补丁信息</h3>
-          <p className="text-gray-500 mb-4">请尝试调整查询条件或选择其他日期范围</p>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentTab("all")}
-          >
-            重置筛选条件
-          </Button>
-        </div>
+        )
       )}
     </>
   )
