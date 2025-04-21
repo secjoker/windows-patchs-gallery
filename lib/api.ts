@@ -24,8 +24,8 @@ export interface ApiResponse {
 }
 
 export async function fetchVulnerabilities(startDate: Date, endDate: Date): Promise<Vulnerability[]> {
-  // 模拟 API 延迟
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // 模拟 API 延迟，减少延迟时间以避免长时间加载
+  await new Promise(resolve => setTimeout(resolve, 300));
   
   // 根据日期范围过滤数据
   return extendedMockVulnerabilities.filter(vuln => {
