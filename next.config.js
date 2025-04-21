@@ -8,6 +8,7 @@ const nextConfig = {
     optimizeCss: true,
   },
   images: {
+    unoptimized: true,  // 禁用图像优化
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {

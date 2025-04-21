@@ -3,11 +3,14 @@
 import { format } from "date-fns";
 import { extendedMockVulnerabilities } from './mock-data';
 
+export type SeverityLevel = "Critical" | "Important" | "Moderate" | "Low";
+export type ExploitedStatus = "Yes" | "No";
+
 export interface Vulnerability {
   id: string;
   title: string;
-  severity: "Critical" | "Important" | "Low";
-  exploited: "Yes" | "No";
+  severity: SeverityLevel;
+  exploited: ExploitedStatus;
   description: string;
   affectedProducts: string[];
   publishedDate: string;
@@ -27,11 +30,24 @@ export async function fetchVulnerabilities(startDate: Date, endDate: Date): Prom
   // 模拟 API 延迟，减少延迟时间以避免长时间加载
   await new Promise(resolve => setTimeout(resolve, 300));
   
-  // 根据日期范围过滤数据
-  return extendedMockVulnerabilities.filter(vuln => {
-    const vulnDate = new Date(vuln.publishedDate);
-    return vulnDate >= startDate && vulnDate <= endDate;
-  });
+  try {
+    // 根据日期范围过滤数据
+    const filteredData = extendedMockVulnerabilities.filter(vuln => {
+      try {
+        const vulnDate = new Date(vuln.publishedDate);
+        return vulnDate >= startDate && vulnDate <= endDate;
+      } catch (error) {
+        console.error("日期解析错误:", error, vuln.publishedDate);
+        return false;
+      }
+    });
+    
+    console.log(`过滤后的漏洞数量: ${filteredData.length}`);
+    return filteredData;
+  } catch (error) {
+    console.error("获取漏洞数据出错:", error);
+    return [];
+  }
 }
 
 // 模拟 API 延迟的辅助函数

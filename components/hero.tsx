@@ -11,12 +11,13 @@ export function Hero() {
         <div className="absolute inset-0 bg-black bg-opacity-60 z-10" />
         <Image
           className="object-cover"
-          src="https://images.unsplash.com/photo-1551808525-51a94da548ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+          src="/background.jpg"
           alt="Background"
           fill
           priority
           sizes="100vw"
           quality={85}
+          unoptimized
         />
       </div>
       
