@@ -17,23 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <header className="bg-slate-900 text-white p-4">
-          <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-xl font-bold">Microsoft Update PatchGallery</h1>
-            <nav>
-              <ul className="flex space-x-4">
-                <li><a href="/" className="hover:text-blue-300">Home</a></li>
-                <li><a href="/about" className="hover:text-blue-300">About</a></li>
-              </ul>
-            </nav>
-          </div>
-        </header>
         {children}
-        <footer className="bg-slate-900 text-white p-4 mt-8">
-          <div className="container mx-auto text-center">
-            <p>© {new Date().getFullYear()} Microsoft Update PatchGallery</p>
-          </div>
-        </footer>
       </body>
     </html>
   );
