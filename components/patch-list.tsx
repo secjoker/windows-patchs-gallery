@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { VulnerabilityCard } from "./vulnerability-card"
 import { Button } from "./ui/button"
 import { fetchVulnerabilities, Vulnerability as ApiVulnerability } from "@/lib/api"
 import { addDays } from "date-fns"
-import { ChevronLeft, ChevronRight, RotateCw } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface PatchListProps {
   data?: Array<{
@@ -23,7 +23,7 @@ interface PatchListProps {
 }
 
 export function PatchList({ data = [] }: PatchListProps) {
-  const [currentTab, setCurrentTab] = useState<"all" | "critical" | "important" | "moderate" | "low" | "exploited">("all")
+  const [currentTab, setCurrentTab] = useState<"all" | "critical" | "important" | "exploited">("all")
   const [vulnerabilities, setVulnerabilities] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,8 +32,18 @@ export function PatchList({ data = [] }: PatchListProps) {
   const ITEMS_PER_PAGE = 9
   const [currentPage, setCurrentPage] = useState(1)
   
+  // 如果没有传入数据，则自动加载模拟数据
+  useEffect(() => {
+    if (data.length > 0) {
+      setVulnerabilities(data)
+      setLoading(false)
+    } else {
+      loadMockData()
+    }
+  }, [data])
+  
   // 加载模拟数据
-  const loadMockData = useCallback(async () => {
+  const loadMockData = async () => {
     setLoading(true)
     setError(null)
     
@@ -42,31 +52,22 @@ export function PatchList({ data = [] }: PatchListProps) {
       const endDate = new Date()
       const startDate = addDays(endDate, -90)
       
-      console.log("加载漏洞数据: 从", startDate, "到", endDate);
       const mockData = await fetchVulnerabilities(startDate, endDate)
-      console.log("获取到漏洞数据:", mockData.length);
-      
-      if (mockData.length === 0) {
-        setError("未找到漏洞数据，请尝试调整过滤条件");
-        setLoading(false);
-        return;
-      }
       
       // 转换数据格式以匹配组件要求
       const formattedData = mockData.map(item => ({
         cveNumber: item.id,
         cveTitle: item.title,
         releaseDate: item.publishedDate,
-        severity: item.severity,
+        severity: item.severity as "Critical" | "Important" | "Moderate" | "Low",
         baseScore: item.cvssScore,
         impact: item.description.split('。')[0],
         exploited: item.exploited === "Yes",
         customerActionRequired: Math.random() > 0.5, // 随机设置
-        kbNumbers: item.kbNumbers || [],
-        productAffected: item.affectedProducts || []
+        kbNumbers: item.kbNumbers,
+        productAffected: item.affectedProducts
       }))
       
-      console.log("格式化后的数据:", formattedData.length);
       setVulnerabilities(formattedData)
     } catch (error) {
       console.error("加载模拟数据失败:", error)
@@ -74,18 +75,7 @@ export function PatchList({ data = [] }: PatchListProps) {
     } finally {
       setLoading(false)
     }
-  }, [])
-  
-  // 如果没有传入数据，则自动加载模拟数据
-  useEffect(() => {
-    if (data.length > 0) {
-      console.log("使用传入的数据:", data.length);
-      setVulnerabilities(data)
-      setLoading(false)
-    } else {
-      loadMockData()
-    }
-  }, [data, loadMockData])
+  }
   
   // 当标签切换时重置页码
   useEffect(() => {
@@ -99,10 +89,6 @@ export function PatchList({ data = [] }: PatchListProps) {
         return item.severity === "Critical"
       case "important":
         return item.severity === "Important"
-      case "moderate":
-        return item.severity === "Moderate"
-      case "low":
-        return item.severity === "Low"
       case "exploited":
         return item.exploited
       default:
@@ -111,14 +97,7 @@ export function PatchList({ data = [] }: PatchListProps) {
   })
   
   // 计算总页数
-  const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE))
-  
-  // 确保当前页码在有效范围内
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE)
   
   // 获取当前页的数据
   const currentData = filteredData.slice(
@@ -137,38 +116,9 @@ export function PatchList({ data = [] }: PatchListProps) {
     document.getElementById('patch-list-top')?.scrollIntoView({ behavior: 'smooth' })
   }
   
-  // 重新加载数据
-  const handleReload = () => {
-    loadMockData();
-  }
-  
-  // 获取统计数据
-  const stats = {
-    total: vulnerabilities.length,
-    critical: vulnerabilities.filter(v => v.severity === "Critical").length,
-    important: vulnerabilities.filter(v => v.severity === "Important").length,
-    moderate: vulnerabilities.filter(v => v.severity === "Moderate").length,
-    low: vulnerabilities.filter(v => v.severity === "Low").length,
-    exploited: vulnerabilities.filter(v => v.exploited).length
-  }
-  
   return (
     <div id="patch-list-top">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">安全漏洞列表</h2>
-        <div className="flex items-center text-sm text-gray-500">
-          {!loading && (
-            <button 
-              onClick={handleReload} 
-              className="flex items-center text-blue-500 hover:text-blue-600 transition-colors"
-              title="重新加载数据"
-            >
-              <RotateCw size={16} className="mr-1" />
-              刷新
-            </button>
-          )}
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold mb-4">安全漏洞列表</h2>
       
       {/* 标签切换 */}
       <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
@@ -182,7 +132,7 @@ export function PatchList({ data = [] }: PatchListProps) {
                   : "text-gray-500 dark:text-gray-400 hover:text-primary transition"
               }`}
             >
-              全部 {stats.total > 0 && <span className="ml-1 text-xs opacity-70">({stats.total})</span>}
+              全部
             </button>
           </li>
           <li className="mr-6">
@@ -194,7 +144,7 @@ export function PatchList({ data = [] }: PatchListProps) {
                   : "text-gray-500 dark:text-gray-400 hover:text-primary transition"
               }`}
             >
-              严重 {stats.critical > 0 && <span className="ml-1 text-xs opacity-70">({stats.critical})</span>}
+              严重
             </button>
           </li>
           <li className="mr-6">
@@ -206,31 +156,7 @@ export function PatchList({ data = [] }: PatchListProps) {
                   : "text-gray-500 dark:text-gray-400 hover:text-primary transition"
               }`}
             >
-              重要 {stats.important > 0 && <span className="ml-1 text-xs opacity-70">({stats.important})</span>}
-            </button>
-          </li>
-          <li className="mr-6">
-            <button
-              onClick={() => setCurrentTab("moderate")}
-              className={`inline-block py-3 px-4 ${
-                currentTab === "moderate"
-                  ? "border-b-2 border-primary font-medium text-primary"
-                  : "text-gray-500 dark:text-gray-400 hover:text-primary transition"
-              }`}
-            >
-              中等 {stats.moderate > 0 && <span className="ml-1 text-xs opacity-70">({stats.moderate})</span>}
-            </button>
-          </li>
-          <li className="mr-6">
-            <button
-              onClick={() => setCurrentTab("low")}
-              className={`inline-block py-3 px-4 ${
-                currentTab === "low"
-                  ? "border-b-2 border-primary font-medium text-primary"
-                  : "text-gray-500 dark:text-gray-400 hover:text-primary transition"
-              }`}
-            >
-              低危 {stats.low > 0 && <span className="ml-1 text-xs opacity-70">({stats.low})</span>}
+              重要
             </button>
           </li>
           <li className="mr-6">
@@ -242,7 +168,7 @@ export function PatchList({ data = [] }: PatchListProps) {
                   : "text-gray-500 dark:text-gray-400 hover:text-primary transition"
               }`}
             >
-              已被利用 {stats.exploited > 0 && <span className="ml-1 text-xs opacity-70">({stats.exploited})</span>}
+              已被利用
             </button>
           </li>
         </ul>
@@ -271,23 +197,6 @@ export function PatchList({ data = [] }: PatchListProps) {
               </p>
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* 筛选后没有数据 */}
-      {!loading && !error && filteredData.length === 0 && vulnerabilities.length > 0 && (
-        <div className="text-center py-16 bg-card rounded-lg shadow">
-          <div className="text-5xl mb-4 text-gray-400">
-            <i className="fas fa-search"></i>
-          </div>
-          <h3 className="text-xl font-semibold mb-2">未找到匹配的漏洞信息</h3>
-          <p className="text-gray-500 mb-4">当前过滤条件下没有符合要求的漏洞数据</p>
-          <Button
-            variant="outline"
-            onClick={() => setCurrentTab("all")}
-          >
-            查看所有漏洞
-          </Button>
         </div>
       )}
       
@@ -376,28 +285,20 @@ export function PatchList({ data = [] }: PatchListProps) {
               </Button>
             </div>
           )}
-          
-          {/* 当前页码状态 */}
-          {totalPages > 1 && (
-            <div className="text-center text-sm text-gray-500 mb-4">
-              显示第 {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} 条，共 {filteredData.length} 条结果
-            </div>
-          )}
         </>
       ) : (
-        !loading && !error && filteredData.length === 0 && vulnerabilities.length === 0 && (
+        !loading && !error && (
           <div className="text-center py-16 bg-card rounded-lg shadow">
             <div className="text-5xl mb-4 text-gray-400">
-              <i className="fas fa-exclamation-circle"></i>
+              <i className="fas fa-search"></i>
             </div>
-            <h3 className="text-xl font-semibold mb-2">暂无漏洞数据</h3>
-            <p className="text-gray-500 mb-4">当前没有可用的漏洞信息</p>
+            <h3 className="text-xl font-semibold mb-2">未找到匹配的补丁信息</h3>
+            <p className="text-gray-500 mb-4">请尝试调整查询条件或选择其他日期范围</p>
             <Button
               variant="outline"
-              onClick={handleReload}
+              onClick={() => setCurrentTab("all")}
             >
-              <RotateCw size={16} className="mr-2" />
-              重新加载
+              重置筛选条件
             </Button>
           </div>
         )

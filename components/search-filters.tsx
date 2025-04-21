@@ -8,61 +8,30 @@ import { DatePickerWithRange } from "./date-picker-with-range"
 import { addDays } from "date-fns"
 import { Card } from "./ui/card"
 
-interface SearchFiltersProps {
-  onSearch?: (filters: any) => void;
-  isSearching?: boolean;
-}
-
-export function SearchFilters({ onSearch, isSearching = false }: SearchFiltersProps) {
+export function SearchFilters() {
   const [dateRange, setDateRange] = useState({
     from: addDays(new Date(), -30),
     to: new Date(),
   })
   
   const [dateRangeError, setDateRangeError] = useState<string>()
-  const [localIsSearching, setLocalIsSearching] = useState(false)
-  
-  // 严重性过滤器
-  const [severityFilters, setSeverityFilters] = useState({
-    critical: true,
-    important: true,
-    moderate: false,
-    low: false
-  })
+  const [isSearching, setIsSearching] = useState(false)
   
   // 处理搜索按钮点击
   const handleSearch = () => {
     if (dateRangeError) return
     
-    const isSearchingState = onSearch ? isSearching : localIsSearching;
+    setIsSearching(true)
     
-    if (!onSearch) {
-      setLocalIsSearching(true)
-    }
-    
-    const filters = {
-      dateRange,
-      severity: severityFilters,
-      // 其他过滤条件...
-    }
-    
-    if (onSearch) {
-      onSearch(filters)
-    } else {
-      // 模拟API请求
-      setTimeout(() => {
-        setLocalIsSearching(false)
-        // 触发搜索事件 - 在实际实现中应该调用父组件传入的回调
-        console.log("执行搜索:", filters)
-      }, 1000)
-    }
-  }
-  
-  const handleSeverityChange = (key: string, checked: boolean) => {
-    setSeverityFilters(prev => ({
-      ...prev,
-      [key]: checked
-    }))
+    // 模拟API请求
+    setTimeout(() => {
+      setIsSearching(false)
+      // 触发搜索事件 - 在实际实现中应该调用父组件传入的回调
+      console.log("执行搜索:", {
+        dateRange,
+        // 其他过滤条件...
+      })
+    }, 1000)
   }
   
   return (
@@ -91,41 +60,25 @@ export function SearchFilters({ onSearch, isSearching = false }: SearchFiltersPr
           <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">漏洞严重性</h3>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-critical" 
-                checked={severityFilters.critical}
-                onCheckedChange={(checked) => handleSeverityChange('critical', checked === true)}
-              />
+              <Checkbox id="filter-critical" defaultChecked />
               <label htmlFor="filter-critical" className="text-gray-800 dark:text-gray-200 cursor-pointer text-sm">
                 严重 (Critical)
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-important" 
-                checked={severityFilters.important}
-                onCheckedChange={(checked) => handleSeverityChange('important', checked === true)}
-              />
+              <Checkbox id="filter-important" defaultChecked />
               <label htmlFor="filter-important" className="text-gray-800 dark:text-gray-200 cursor-pointer text-sm">
                 重要 (Important)
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-moderate" 
-                checked={severityFilters.moderate}
-                onCheckedChange={(checked) => handleSeverityChange('moderate', checked === true)}
-              />
+              <Checkbox id="filter-moderate" />
               <label htmlFor="filter-moderate" className="text-gray-800 dark:text-gray-200 cursor-pointer text-sm">
                 中等 (Moderate)
               </label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="filter-low" 
-                checked={severityFilters.low}
-                onCheckedChange={(checked) => handleSeverityChange('low', checked === true)}
-              />
+              <Checkbox id="filter-low" />
               <label htmlFor="filter-low" className="text-gray-800 dark:text-gray-200 cursor-pointer text-sm">
                 低危 (Low)
               </label>
@@ -191,10 +144,10 @@ export function SearchFilters({ onSearch, isSearching = false }: SearchFiltersPr
       <div className="flex justify-center">
         <Button 
           onClick={handleSearch}
-          disabled={!!dateRangeError || (onSearch ? isSearching : localIsSearching)}
+          disabled={!!dateRangeError || isSearching}
           className="min-w-[200px] py-6 text-lg bg-gradient-to-r from-blue-600 to-blue-400 text-white font-bold tracking-wide hover:opacity-90 transition-opacity"
         >
-          {(onSearch ? isSearching : localIsSearching) ? (
+          {isSearching ? (
             <>
               <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
               搜索中...
