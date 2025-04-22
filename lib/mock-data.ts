@@ -1,4 +1,4 @@
-import { Vulnerability } from "./api";
+import { Vulnerability, SeverityLevel, ExploitedStatus } from "./api";
 
 // 漏洞类型常量
 const IMPACT_TYPES = [
@@ -229,8 +229,20 @@ export function generateRandomVulnerability(count: number): Vulnerability[] {
   const result: Vulnerability[] = [];
   
   for (let i = 0; i < count; i++) {
-    const severityLevel = Math.random() < 0.3 ? "Critical" : (Math.random() < 0.7 ? "Important" : "Low");
-    const isExploited = Math.random() < 0.25 ? "Yes" : "No";
+    // 随机选择严重性级别，确保各级别都有数据
+    let severityLevel: SeverityLevel;
+    const severityRandom = Math.random();
+    if (severityRandom < 0.25) {
+      severityLevel = "Critical";
+    } else if (severityRandom < 0.5) {
+      severityLevel = "Important";
+    } else if (severityRandom < 0.75) {
+      severityLevel = "Moderate";
+    } else {
+      severityLevel = "Low";
+    }
+    
+    const isExploited: ExploitedStatus = Math.random() < 0.25 ? "Yes" : "No";
     const impactType = IMPACT_TYPES[Math.floor(Math.random() * IMPACT_TYPES.length)];
     
     // 随机选择2-4个受影响产品
@@ -266,8 +278,10 @@ export function generateRandomVulnerability(count: number): Vulnerability[] {
       cvssScore = 8.0 + Math.random() * 2.0;
     } else if (severityLevel === "Important") {
       cvssScore = 6.0 + Math.random() * 2.0;
+    } else if (severityLevel === "Moderate") {
+      cvssScore = 4.0 + Math.random() * 2.0;
     } else {
-      cvssScore = 3.0 + Math.random() * 3.0;
+      cvssScore = 2.0 + Math.random() * 2.0;
     }
     
     // 创建漏洞记录
