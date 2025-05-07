@@ -38,13 +38,13 @@ export function Navbar() {
           <Link href="/" className="text-sm md:text-base hover:text-blue-500 transition">
             首页
           </Link>
-          <Link href="/latest" className="text-sm md:text-base hover:text-blue-500 transition">
+          <Link href="https://api.msrc.microsoft.com/update-guide/rss" className="text-sm md:text-base hover:text-blue-500 transition">
             最新更新
           </Link>
-          <Link href="/security" className="text-sm md:text-base hover:text-blue-500 transition">
+          <Link href="https://msrc.microsoft.com/update-guide/en-us" className="text-sm md:text-base hover:text-blue-500 transition">
             安全公告
           </Link>
-          <Link href="/search" className="text-sm md:text-base hover:text-blue-500 transition">
+          <Link href="https://www.catalog.update.microsoft.com/Search.aspx" className="text-sm md:text-base hover:text-blue-500 transition">
             KB 搜索
           </Link>
         </div>
